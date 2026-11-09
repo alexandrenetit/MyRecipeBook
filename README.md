@@ -2,23 +2,6 @@
 
 ![hero-project-image]
 
-## Índice
-
-- [Sobre o projeto](#sobre-o-projeto)
-- [Curso na Udemy](#curso-na-udemy)
-- [O que você vai aprender no curso](#o-que-você-vai-aprender-no-curso)
-- [Features](#features)
-- [Construído com](#construído-com)
-- [Arquitetura](#arquitetura)
-- [CI/CD e qualidade de código](#cicd-e-qualidade-de-código)
-- [Como executar o projeto](#como-executar-o-projeto)
-- [Instalação](#instalação)
-- [Executando os testes](#executando-os-testes)
-- [Licença](#licença)
-- [Autor](#autor)
-
----
-
 ## Sobre o projeto
 
 **Meu Livro de Receitas** é uma API desenvolvida em **.NET** para gerenciamento de receitas culinárias.
@@ -28,22 +11,6 @@ A aplicação permite que usuários se cadastrem, façam login e gerenciem suas 
 Além do CRUD de receitas, o projeto também aborda recursos comuns em aplicações reais, como autenticação com JWT, Refresh Token, login com Google, upload de imagens, integração com IA, mensageria, testes automatizados, pipelines CI/CD, deploy no Azure e análise de cobertura de código.
 
 Este projeto foi criado com foco em boas práticas de desenvolvimento backend e organização de código.
-
----
-
-## Curso na Udemy
-
-### [.NET Core: um curso orientado para o mercado de trabalho][curso-udemy]
-
-Este repositório faz parte do curso **.NET Core: um curso orientado para o mercado de trabalho**, disponível na Udemy.
-
-Durante o curso, construímos uma API completa do zero, passando por arquitetura, banco de dados, autenticação, testes, Docker, Azure DevOps, pipelines e boas práticas de desenvolvimento.
-
-O curso é indicado para pessoas que já possuem conhecimento em lógica de programação e C#, e querem aprender a desenvolver APIs mais completas, organizadas e preparadas para cenários reais.
-
-Para acessar o curso, clique [neste link][curso-udemy].
-
-![hero-course-image]
 
 ---
 
@@ -278,7 +245,6 @@ Desenvolvedor .NET, mentor e instrutor, com experiência em desenvolvimento back
 
 <!-- Links -->
 [dot-net-sdk]: https://dotnet.microsoft.com/en-us/download/dotnet/10.0
-[curso-udemy]: https://www.udemy.com/course/net-core-curso-orientado-para-mercado-de-trabalho/?referralCode=C0850BF224055DE39722
 
 <!-- Images -->
 [hero-project-image]: images/heroProjectImage.png
