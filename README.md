@@ -12,27 +12,6 @@ Além do CRUD de receitas, o projeto também aborda recursos comuns em aplicaç�
 
 Este projeto foi criado com foco em boas práticas de desenvolvimento backend e organização de código.
 
----
-
-## O que você vai aprender no curso
-
-Durante o curso, você aprenderá conceitos, técnicas e ferramentas usados em projetos reais:
-
-- Criar uma API REST com .NET
-- Estruturar uma solução com DDD e princípios SOLID
-- Trabalhar com Entity Framework e migrations
-- Implementar autenticação com JWT, Refresh Token e login com Google
-- Integrar recursos externos: IA e mensageria com Azure Service Bus
-- Escrever testes de unidade e de integração usando Testcontainers
-- Configurar Docker no ambiente de desenvolvimento
-- Criar pipelines no Azure DevOps com publicação de cobertura de testes
-- Fazer deploy da aplicação em produção no Microsoft Azure
-- Trabalhar em fluxo de time com Git, Pull Requests e políticas de branch
-- Organizar o trabalho com práticas de SCRUM
-- Usar o Claude Code como assistente de IA no desenvolvimento
-
----
-
 ## Features
 
 A API oferece as seguintes funcionalidades:
@@ -234,12 +213,6 @@ Para os testes de integração, certifique-se de que o Docker esteja em execuç�
 Este projeto está disponível para fins de estudo e aprendizado.
 
 A distribuição, revenda ou uso comercial do conteúdo do curso e dos materiais associados não é permitida sem autorização.
-
----
-
-## Autor
-
-Desenvolvedor .NET, mentor e instrutor, com experiência em desenvolvimento backend, arquitetura de software, APIs, testes automatizados, Azure DevOps e boas práticas de desenvolvimento.
 
 ---
 
