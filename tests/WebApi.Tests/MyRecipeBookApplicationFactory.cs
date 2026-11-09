@@ -1,0 +1,122 @@
+﻿using CommonTestUtilities.AI;
+using CommonTestUtilities.Entities;
+using DotNet.Testcontainers.Containers;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using MyRecipeBook.Api.BackgroundServices;
+using MyRecipeBook.Domain.AI;
+using MyRecipeBook.Domain.Security.PasswordHashing;
+using MyRecipeBook.Domain.Security.Tokens;
+using MyRecipeBook.Infrastructure.DataAccess;
+using Testcontainers.Azurite;
+using Testcontainers.MySql;
+using Testcontainers.ServiceBus;
+using WebApi.Tests.Resources;
+
+namespace WebApi.Tests;
+
+public class MyRecipeBookApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
+{
+    public UserIdentityManager User1 { get; private set; } = default!;
+
+    public string TOKEN_USER_NOT_FOUND_IN_DATABASE { get; private set; } = string.Empty;
+
+    private readonly MySqlContainer _mySqlContainer;
+    private readonly AzuriteContainer _azuriteContainer;
+    protected readonly ServiceBusContainer _serviceBusContainer;
+
+    public MyRecipeBookApplicationFactory()
+    {
+        _mySqlContainer = new MySqlBuilder("mysql:8.0")
+            .WithDatabase("meulivrodereceitas")
+            .WithCommand("--innodb-use-native-aio=0")
+            .Build();
+
+        _azuriteContainer = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:latest")
+            .WithCommand("--skipApiVersionCheck")
+            .Build();
+
+        _serviceBusContainer = new ServiceBusBuilder("mcr.microsoft.com/azure-messaging/servicebus-emulator:latest")
+            .WithAcceptLicenseAgreement(true)
+            .WithConfig(Path.Combine(AppContext.BaseDirectory, "ServiceBusConfig.json"))
+            .Build();
+    }
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Tests")
+            .ConfigureAppConfiguration((_, configuration) =>
+            {
+                var parameters = new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:DbConnection"] = _mySqlContainer.GetConnectionString(),
+                    ["ConnectionStrings:BlobStorage"] = _azuriteContainer.GetConnectionString()
+                };
+
+                if (_serviceBusContainer.State == DotNet.Testcontainers.Containers.TestcontainersStates.Running)
+                    parameters["ConnectionStrings:ServiceBus"] = _serviceBusContainer.GetConnectionString();
+
+                configuration.AddInMemoryCollection(parameters);
+            })
+            .ConfigureTestServices(services =>
+            {
+                services.RemoveAll<IGenerateRecipeAI>();
+                services.AddScoped(_ => IGenerateRecipeAIBuilder.Build());
+
+                if (_serviceBusContainer.State != TestcontainersStates.Running)
+                {
+                    var consumer = services.SingleOrDefault(service => service.ImplementationType == typeof(DeleteUserAccountConsumer));
+                    if (consumer is not null)
+                        services.Remove(consumer);
+                }
+            });
+    }
+
+    public async virtual Task InitializeAsync()
+    {
+        await _mySqlContainer.StartAsync();
+        await _azuriteContainer.StartAsync();
+
+        await using var scope = Services.CreateAsyncScope();
+
+        var dbContext = scope.ServiceProvider.GetRequiredService<MyRecipeBookDbContext>();
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+        var accessTokenGenerator = scope.ServiceProvider.GetRequiredService<IAccessTokenGenerator>();
+        var refreshTokenGenerator = scope.ServiceProvider.GetRequiredService<IRefreshTokenGenerator>();
+
+        var (user, password) = UserBuilder.Build();
+        user.Password = passwordHasher.HashPassword(password);
+
+        var recipe = RecipeBuilder.Build(user);
+
+        var refreshToken = new MyRecipeBook.Domain.Entities.RefreshToken
+        {
+            Value = refreshTokenGenerator.Generate(),
+            UserId = user.Id
+        };
+
+        await dbContext.Users.AddAsync(user);
+        await dbContext.Recipes.AddAsync(recipe);
+        await dbContext.RefreshTokens.AddAsync(refreshToken);
+
+        await dbContext.SaveChangesAsync();
+
+        var user1AccessToken = accessTokenGenerator.Generate(user);
+
+        User1 = new UserIdentityManager(user, recipe, password, user1AccessToken, refreshToken.Value);
+
+        TOKEN_USER_NOT_FOUND_IN_DATABASE = accessTokenGenerator.Generate(new MyRecipeBook.Domain.Entities.User());
+    }
+
+    async Task IAsyncLifetime.DisposeAsync()
+    {
+        await _mySqlContainer.StopAsync();
+        await _azuriteContainer.StopAsync();
+        await _serviceBusContainer.StopAsync();
+    }
+}

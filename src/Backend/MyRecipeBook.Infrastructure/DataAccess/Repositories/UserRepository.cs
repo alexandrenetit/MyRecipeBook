@@ -1,0 +1,91 @@
+﻿using Microsoft.EntityFrameworkCore;
+using MyRecipeBook.Domain.Entities;
+using MyRecipeBook.Domain.Repositories.User;
+
+namespace MyRecipeBook.Infrastructure.DataAccess.Repositories;
+
+internal sealed class UserRepository : IUserWriteOnlyRepository, IUserReadOnlyRepository, IUserUpdateOnlyRepository
+{
+    private readonly MyRecipeBookDbContext _dbContext;
+
+    public UserRepository(MyRecipeBookDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public async Task Add(User user) => await _dbContext.Users.AddAsync(user);
+
+    public async Task DeactivateAccount(Guid userId)
+    {
+        await _dbContext
+            .Users
+            .Where(user => user.Active && user.Id == userId)
+            .ExecuteUpdateAsync(setter => setter.SetProperty(user => user.Active, false));
+    }
+
+    public async Task DeleteAccount(Guid userId)
+    {
+        var userToDelete = await _dbContext.Users.SingleOrDefaultAsync(user => user.Active == false && user.Id == userId);
+        if (userToDelete is not null)
+        {
+            var recipes = await _dbContext.Recipes.Where(recipe => recipe.UserId == userId).ToListAsync();
+            _dbContext.Recipes.RemoveRange(recipes);
+
+            var verificationCodes = await _dbContext.VerificationCodes.Where(verificationCode => verificationCode.UserId == userId).ToListAsync();
+            _dbContext.VerificationCodes.RemoveRange(verificationCodes);
+
+            var refreshTokens = await _dbContext.RefreshTokens.Where(refreshToken => refreshToken.UserId == userId).ToListAsync();
+            _dbContext.RefreshTokens.RemoveRange(refreshTokens);
+
+            _dbContext.Users.Remove(userToDelete);
+        }
+    }
+
+    public async Task<bool> ExistActiveUserWithEmail(string email)
+    {
+        return await _dbContext.Users.AnyAsync(user => user.Active && user.Email.Equals(email));
+    }
+
+    public async Task<bool> ExistActiveUserWithId(Guid userId)
+    {
+        return await _dbContext.Users.AnyAsync(user => user.Active && user.Id == userId);
+    }
+
+    public async Task<User?> GetByEmail(string email)
+    {
+        return await _dbContext.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(user => user.Active && user.Email.Equals(email));
+    }
+
+    public async Task<User?> GetById(Guid userId)
+    {
+        return await _dbContext.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(user => user.Active && user.Id == userId);
+    }
+
+    public async Task UpdatePassword(Guid userId, string passwordHash)
+    {
+        await _dbContext
+            .Users
+            .Where(user => user.Active && user.Id == userId)
+            .ExecuteUpdateAsync(setter => setter.SetProperty(user => user.Password, passwordHash));
+    }
+
+    public void UpdateProfile(User user)
+    {
+        _dbContext.Users.Attach(user);
+
+        _dbContext.Entry(user).Property(user => user.Name).IsModified = true;
+        _dbContext.Entry(user).Property(user => user.Email).IsModified = true;
+    }
+
+    public async Task UpdateProfilePictureStatus(Guid userId, bool hasProfilePicture)
+    {
+        await _dbContext
+            .Users
+            .Where(user => user.Active && user.Id == userId)
+            .ExecuteUpdateAsync(setter => setter.SetProperty(user => user.HasImage, hasProfilePicture));
+    }
+}
