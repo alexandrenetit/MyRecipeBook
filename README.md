@@ -214,12 +214,6 @@ Para executar o projeto localmente, siga os passos abaixo.
 
 ## Instalação
 
-Clone o repositório:
-
-```sh
-git clone https://github.com/welissonArley/MyRecipeBook.git
-```
-
 Acesse a pasta do projeto:
 
 ```sh
@@ -277,8 +271,6 @@ A distribuição, revenda ou uso comercial do conteúdo do curso e dos materiais
 ---
 
 ## Autor
-
-Criado por **Welisson Arley**.
 
 Desenvolvedor .NET, mentor e instrutor, com experiência em desenvolvimento backend, arquitetura de software, APIs, testes automatizados, Azure DevOps e boas práticas de desenvolvimento.
 
